@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <link rel="manifest" href="manifest.json">
   <title>3D CBM Calculator</title>
   <style>
     :root {
@@ -53,7 +54,6 @@
       backdrop-filter: blur(2px);
       border: 1px solid rgba(255, 255, 255, 0.05);
     }
-    /* header */
     .header {
       display: flex;
       justify-content: space-between;
@@ -119,8 +119,6 @@
       color: white;
       border-color: var(--primary);
     }
-
-    /* 3D Box with realistic shading and perspective */
     .box-view {
       width: 100%;
       height: 140px;
@@ -157,7 +155,6 @@
       align-items: center;
       justify-content: center;
     }
-    /* extra panel lines for realism */
     .box-shape::before {
       content: "";
       position: absolute;
@@ -180,7 +177,6 @@
       50% { transform: rotateX(25deg) rotateY(-20deg) rotateZ(15deg); }
       100% { transform: rotateX(20deg) rotateY(-30deg) rotateZ(10deg); }
     }
-
     h2 {
       margin: 0 0 1.2rem 0;
       font-size: 1.4rem;
@@ -198,7 +194,6 @@
       font-weight: 400;
       opacity: 0.6;
     }
-
     .input-row {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
@@ -240,7 +235,6 @@
       background-repeat: no-repeat;
       background-position: right 14px center;
     }
-
     .btn-primary {
       width: 100%;
       padding: 18px;
@@ -277,7 +271,6 @@
       background: rgba(100, 116, 139, 0.08);
       border-color: var(--primary);
     }
-
     .table-container {
       overflow-x: auto;
       width: 100%;
@@ -398,7 +391,6 @@
 
 <script>
   (function() {
-    // theme
     window.toggleTheme = function() {
       const doc = document.documentElement;
       const isDark = doc.getAttribute('data-theme') === 'dark';
@@ -406,7 +398,6 @@
       document.querySelector('.btn-toggle').innerText = isDark ? '☀️' : '🌙';
     };
 
-    // clocks
     function updateClocks() {
       const options = { hour: '2-digit', minute: '2-digit', hour12: true };
       const china = new Date().toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Shanghai' });
@@ -417,7 +408,6 @@
     setInterval(updateClocks, 1000);
     updateClocks();
 
-    // data
     let shipmentData = [];
 
     window.addItem = function() {
@@ -434,7 +424,7 @@
       }
       const volPerUnit = (unit === 'cm') ? (l * w * h) / 1000000 : (l * w * h);
       const vol = volPerUnit * qty;
-      const volW = vol * 167; // volumetric weight
+      const volW = vol * 167;
       const cost = vol * pricePerCbm;
       shipmentData.push({ vol, volW, cost });
       updateTable();
@@ -471,9 +461,8 @@
       }
     };
 
-    // initial empty
     updateTable();
   })();
 </script>
 </body>
-  </html>
+</html>
