@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>3D CBM Calculator</title>
+  <style>
+    :root {
+      --primary: #0ea5e9;
+      --text: #1e293b;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #e2e8f0;
+      --input-bg: #ffffff;
+      --shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.25);
+      --box-color: #e2d2b8;
+      --box-border: #854d0e;
+    }
+    [data-theme='dark'] {
+      --primary: #38bdf8;
+      --text: #f1f5f9;
+      --bg: #0f172a;
+      --card: #1e293b;
+      --border: #334155;
+      --input-bg: #0f172a;
+      --shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.6);
+      --box-color: #b89a7a;
+      --box-border: #a67c52;
+    }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.2s ease, color 0.2s, border 0.2s;
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 12px;
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      align-items: center;
+    }
+    .app-card {
+      background: var(--card);
+      padding: 1.8rem 1.5rem 1.8rem 1.5rem;
+      border-radius: 28px;
+      box-shadow: var(--shadow);
+      width: 100%;
+      max-width: 520px;
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    /* header */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .clock-icon-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      cursor: help;
+      color: var(--primary);
+      padding: 6px 10px 6px 6px;
+      border-radius: 40px;
+      background: rgba(14, 165, 233, 0.08);
+      border: 1px solid rgba(14, 165, 233, 0.15);
+    }
+    .clock-tooltip {
+      display: none;
+      position: absolute;
+      top: 110%;
+      left: 0;
+      background: var(--card);
+      border: 1px solid var(--border);
+      padding: 12px 16px;
+      border-radius: 14px;
+      font-size: 0.8rem;
+      font-family: 'SF Mono', monospace;
+      white-space: nowrap;
+      z-index: 20;
+      box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.3);
+      line-height: 1.6;
+      backdrop-filter: blur(4px);
+      background: rgba(30, 41, 59, 0.9);
+      color: #f1f5f9;
+      border: 1px solid #475569;
+      font-weight: 500;
+    }
+    [data-theme="light"] .clock-tooltip {
+      background: rgba(255, 255, 255, 0.95);
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    .clock-icon-wrapper:hover .clock-tooltip {
+      display: block;
+    }
+    .btn-toggle {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      width: 38px;
+      height: 38px;
+      cursor: pointer;
+      color: var(--text);
+      font-size: 1.2rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+    }
+    .btn-toggle:hover {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    /* 3D Box with realistic shading and perspective */
+    .box-view {
+      width: 100%;
+      height: 140px;
+      background: radial-gradient(circle at 20% 30%, #e9eef3, #cbd5e1);
+      border-radius: 24px;
+      margin-bottom: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      perspective: 800px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+    [data-theme="dark"] .box-view {
+      background: radial-gradient(circle at 20% 30%, #2d3a4f, #1a2332);
+    }
+    .box-shape {
+      width: 80px;
+      height: 80px;
+      background: var(--box-color);
+      border: 2px solid var(--box-border);
+      transform: rotateX(20deg) rotateY(-30deg) rotateZ(10deg);
+      animation: floatRotate 8s ease-in-out infinite;
+      border-radius: 4px 12px 12px 4px;
+      box-shadow: 
+        8px 8px 0 rgba(0,0,0,0.08),
+        16px 16px 20px rgba(0,0,0,0.15),
+        inset -4px -4px 8px rgba(0,0,0,0.1),
+        inset 4px 4px 8px rgba(255,255,240,0.3);
+      position: relative;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    /* extra panel lines for realism */
+    .box-shape::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      left: 6px;
+      right: 6px;
+      bottom: 6px;
+      border: 1px dashed rgba(133, 77, 14, 0.2);
+      border-radius: 2px;
+      opacity: 0.6;
+    }
+    .box-shape::after {
+      content: "📦";
+      font-size: 24px;
+      opacity: 0.5;
+      filter: drop-shadow(0 4px 4px rgba(0,0,0,0.1));
+    }
+    @keyframes floatRotate {
+      0% { transform: rotateX(20deg) rotateY(-30deg) rotateZ(10deg); }
+      50% { transform: rotateX(25deg) rotateY(-20deg) rotateZ(15deg); }
+      100% { transform: rotateX(20deg) rotateY(-30deg) rotateZ(10deg); }
+    }
+
+    h2 {
+      margin: 0 0 1.2rem 0;
+      font-size: 1.4rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text);
+      text-align: center;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    h2 small {
+      font-size: 0.8rem;
+      font-weight: 400;
+      opacity: 0.6;
+    }
+
+    .input-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 6px;
+    }
+    .field-group {
+      margin-bottom: 12px;
+    }
+    label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      color: #64748b;
+      margin-bottom: 5px;
+      display: block;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    input, select {
+      width: 100%;
+      padding: 14px 12px;
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      font-size: 16px;
+      background: var(--input-bg);
+      color: var(--text);
+      transition: 0.15s;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      font-weight: 500;
+      appearance: none;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2364748b' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 14px center;
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 18px;
+      background: var(--primary);
+      color: white;
+      border: none;
+      border-radius: 40px;
+      font-weight: 700;
+      cursor: pointer;
+      font-size: 1rem;
+      letter-spacing: 0.3px;
+      box-shadow: 0 8px 18px -6px rgba(14, 165, 233, 0.3);
+      transition: all 0.2s;
+      margin-top: 8px;
+    }
+    .btn-primary:hover {
+      transform: scale(0.98);
+      box-shadow: 0 4px 12px -4px rgba(14, 165, 233, 0.4);
+    }
+    .btn-secondary {
+      width: 100%;
+      padding: 16px;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      margin-top: 12px;
+      transition: 0.2s;
+      font-size: 0.9rem;
+    }
+    .btn-secondary:hover {
+      background: rgba(100, 116, 139, 0.08);
+      border-color: var(--primary);
+    }
+
+    .table-container {
+      overflow-x: auto;
+      width: 100%;
+      margin-top: 22px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--input-bg);
+      padding: 4px 0;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.8rem;
+      min-width: 280px;
+    }
+    th {
+      padding: 14px 8px;
+      text-align: left;
+      font-weight: 700;
+      color: #64748b;
+      border-bottom: 1px solid var(--border);
+      text-transform: uppercase;
+      font-size: 0.6rem;
+      letter-spacing: 0.5px;
+    }
+    td {
+      padding: 14px 8px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    .grand-total {
+      margin-top: 18px;
+      font-weight: 700;
+      font-size: 1rem;
+      text-align: right;
+      padding: 14px 16px;
+      background: var(--card);
+      border-radius: 40px;
+      border: 1px solid var(--border);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .grand-total span {
+      opacity: 0.7;
+      font-weight: 400;
+    }
+    .delete-btn {
+      background: #ef4444;
+      border: none;
+      color: white;
+      padding: 4px 12px;
+      border-radius: 30px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.15s;
+      box-shadow: 0 2px 6px rgba(239, 68, 68, 0.2);
+    }
+    .delete-btn:hover {
+      background: #dc2626;
+      transform: scale(0.92);
+    }
+    @media (max-width: 480px) {
+      .app-card { padding: 1.2rem; }
+      .input-row { gap: 6px; }
+    }
+  </style>
+</head>
+<body>
+<div class="app-card">
+  <div class="header">
+    <div class="clock-icon-wrapper">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="22" height="22">
+        <circle cx="12" cy="12" r="10"></circle>
+        <polyline points="12 6 12 12 16 14"></polyline>
+      </svg>
+      <div class="clock-tooltip" id="clocks"></div>
+    </div>
+    <button class="btn-toggle" onclick="toggleTheme()">☀️</button>
+  </div>
+
+  <h2>📦 CBM <small>· 3D real</small></h2>
+
+  <div class="box-view"><div class="box-shape"></div></div>
+
+  <div class="field-group">
+    <label>Unit</label>
+    <select id="unit"><option value="cm">Centimeters (cm)</option><option value="m">Meters (m)</option></select>
+  </div>
+
+  <div class="input-row">
+    <div><label>Length</label><input type="number" id="length" placeholder="0" step="any"></div>
+    <div><label>Width</label><input type="number" id="width" placeholder="0" step="any"></div>
+    <div><label>Height</label><input type="number" id="height" placeholder="0" step="any"></div>
+  </div>
+
+  <div class="field-group"><label>Quantity</label><input type="number" id="qty" placeholder="1" value="1" min="1" step="1"></div>
+  <div class="field-group"><label>Price per CBM (₦)</label><input type="number" id="price" placeholder="0" step="any"></div>
+  
+  <button class="btn-primary" onclick="addItem()">➕ Add to List</button>
+  
+  <div class="table-container">
+    <table>
+      <thead><tr><th>Vol (m³)</th><th>Wt (kg)</th><th>Cost (₦)</th><th></th></tr></thead>
+      <tbody id="list-body"></tbody>
+    </table>
+  </div>
+  
+  <div class="grand-total" id="grand-total"><span>Total</span> 0.0000 m³ · 0.0 kg · ₦0</div>
+  <button class="btn-secondary" onclick="resetForm()">🗑️ Clear all</button>
+</div>
+
+<script>
+  (function() {
+    // theme
+    window.toggleTheme = function() {
+      const doc = document.documentElement;
+      const isDark = doc.getAttribute('data-theme') === 'dark';
+      doc.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.querySelector('.btn-toggle').innerText = isDark ? '☀️' : '🌙';
+    };
+
+    // clocks
+    function updateClocks() {
+      const options = { hour: '2-digit', minute: '2-digit', hour12: true };
+      const china = new Date().toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Shanghai' });
+      const turkey = new Date().toLocaleTimeString('en-US', { ...options, timeZone: 'Europe/Istanbul' });
+      const india = new Date().toLocaleTimeString('en-US', { ...options, timeZone: 'Asia/Kolkata' });
+      document.getElementById('clocks').innerHTML = `🇨🇳 ${china}<br>🇹🇷 ${turkey}<br>🇮🇳 ${india}`;
+    }
+    setInterval(updateClocks, 1000);
+    updateClocks();
+
+    // data
+    let shipmentData = [];
+
+    window.addItem = function() {
+      const l = parseFloat(document.getElementById('length').value) || 0;
+      const w = parseFloat(document.getElementById('width').value) || 0;
+      const h = parseFloat(document.getElementById('height').value) || 0;
+      const qty = parseInt(document.getElementById('qty').value) || 1;
+      const pricePerCbm = parseFloat(document.getElementById('price').value) || 0;
+      const unit = document.getElementById('unit').value;
+      
+      if (l <= 0 || w <= 0 || h <= 0) {
+        alert('Please enter valid dimensions ( > 0 )');
+        return;
+      }
+      const volPerUnit = (unit === 'cm') ? (l * w * h) / 1000000 : (l * w * h);
+      const vol = volPerUnit * qty;
+      const volW = vol * 167; // volumetric weight
+      const cost = vol * pricePerCbm;
+      shipmentData.push({ vol, volW, cost });
+      updateTable();
+    };
+
+    function updateTable() {
+      const body = document.getElementById('list-body');
+      body.innerHTML = '';
+      let tV = 0, tW = 0, tC = 0;
+      shipmentData.forEach((item, idx) => {
+        tV += item.vol;
+        tW += item.volW;
+        tC += item.cost;
+        body.innerHTML += `<tr>
+          <td>${item.vol.toFixed(4)}</td>
+          <td>${item.volW.toFixed(1)}</td>
+          <td>₦${item.cost.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}</td>
+          <td><button class="delete-btn" onclick="removeItem(${idx})">✕</button></td>
+        </tr>`;
+      });
+      document.getElementById('grand-total').innerHTML = `<span>Total</span> ${tV.toFixed(4)} m³ · ${tW.toFixed(1)} kg · ₦${tC.toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`;
+    }
+
+    window.removeItem = function(index) {
+      shipmentData.splice(index, 1);
+      updateTable();
+    };
+
+    window.resetForm = function() {
+      if (shipmentData.length === 0) return;
+      if (confirm('Clear all items?')) {
+        shipmentData = [];
+        updateTable();
+      }
+    };
+
+    // initial empty
+    updateTable();
+  })();
+</script>
+</body>
+  </html>
