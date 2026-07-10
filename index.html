@@ -364,7 +364,11 @@
 
   <div class="field-group">
     <label>Unit</label>
-    <select id="unit"><option value="cm">Centimeters (cm)</option><option value="m">Meters (m)</option></select>
+    <select id="unit">
+      <option value="cm">Centimeters (cm)</option>
+      <option value="m">Meters (m)</option>
+      <option value="mm">Millimeters (mm)</option>
+    </select>
   </div>
 
   <div class="input-row">
@@ -422,9 +426,19 @@
         alert('Please enter valid dimensions ( > 0 )');
         return;
       }
-      const volPerUnit = (unit === 'cm') ? (l * w * h) / 1000000 : (l * w * h);
+      
+      // Calculate volume based on unit
+      let volPerUnit;
+      if (unit === 'cm') {
+        volPerUnit = (l * w * h) / 1000000; // cm³ to m³
+      } else if (unit === 'mm') {
+        volPerUnit = (l * w * h) / 1000000000; // mm³ to m³
+      } else {
+        volPerUnit = (l * w * h); // meters (m)
+      }
+      
       const vol = volPerUnit * qty;
-      const volW = vol * 167;
+      const volW = vol * 167; // volumetric weight
       const cost = vol * pricePerCbm;
       shipmentData.push({ vol, volW, cost });
       updateTable();
@@ -463,7 +477,7 @@
 
     updateTable();
   })();
-  </script>
+</script>
 
 <script>
   // Register service worker for offline support
